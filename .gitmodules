@@ -1,0 +1,4 @@
+[submodule "clr_ws"]
+	path = clr_ws
+	url = https://github.com/NASA-JSC-Robotics/clr_ws
+	branch = jazzy-devel

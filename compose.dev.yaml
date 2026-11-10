@@ -1,0 +1,14 @@
+# Development mode: edit clr_ws/src on the host, rebuild inside the container.
+# Named volumes start from the baked build/install and then persist your rebuilds.
+services:
+  sim:
+    volumes:
+      - ./clr_ws/src:/home/imetro/ws/src
+      - dev_build:/home/imetro/ws/build
+      - dev_install:/home/imetro/ws/install
+      - dev_log:/home/imetro/ws/log
+
+volumes:
+  dev_build:
+  dev_install:
+  dev_log:

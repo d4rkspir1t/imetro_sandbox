@@ -1,0 +1,29 @@
+name: imetro-sandbox
+
+services:
+  sim:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: sim
+      args:
+        ROS_IMAGE: ${ROS_IMAGE:-ros:jazzy}
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
+        BUILD_JOBS: ${BUILD_JOBS:-4}
+    image: imetro-sandbox:${IMETRO_TAG:-latest}
+    container_name: imetro-sim
+    init: true
+    tty: true
+    stdin_open: true
+    shm_size: 1gb
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      # Keep DDS traffic inside the container; do not leak onto the host LAN.
+      ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
+    volumes:
+      - ros_log:/home/imetro/.ros/log
+    command: sleep infinity
+
+volumes:
+  ros_log:

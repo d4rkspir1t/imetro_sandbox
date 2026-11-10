@@ -1,0 +1,13 @@
+# NVIDIA GPU rendering. Needs the NVIDIA Container Toolkit on the host.
+services:
+  sim:
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

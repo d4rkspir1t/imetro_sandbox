@@ -1,0 +1,9 @@
+.git
+**/.git
+data
+dist
+clr_ws/build
+clr_ws/install
+clr_ws/log
+clr_ws/.ccache
+clr_ws/docs

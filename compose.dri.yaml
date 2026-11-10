@@ -1,0 +1,8 @@
+# Intel / AMD GPU rendering through /dev/dri.
+services:
+  sim:
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "${VIDEO_GID:-44}"
+      - "${RENDER_GID:-109}"

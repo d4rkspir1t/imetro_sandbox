@@ -1,0 +1,13 @@
+# Browser-based display: open http://localhost:6080/vnc.html
+# Uses a virtual X server inside the container with software rendering.
+# Use INSTEAD of compose.x11.yaml.
+services:
+  sim:
+    build:
+      target: vnc
+    image: imetro-sandbox:${IMETRO_TAG:-latest}-vnc
+    ports:
+      - "127.0.0.1:6080:6080"
+    environment:
+      DISPLAY: ":99"
+      LIBGL_ALWAYS_SOFTWARE: "1"

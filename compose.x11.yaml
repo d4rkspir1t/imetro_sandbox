@@ -1,0 +1,9 @@
+# Show MuJoCo / RViz on the host display (X11 or XWayland).
+# Run `xhost +local:docker` on the host first (scripts/run_*.sh do this).
+services:
+  sim:
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw

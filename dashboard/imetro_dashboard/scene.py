@@ -74,6 +74,18 @@ class RobotScene:
     def joint_names(self) -> list[str]:
         return self._names
 
+    @property
+    def limits(self) -> dict[str, tuple[float, float, float]]:
+        """Actuated joint -> (lower, upper, velocity) from the URDF; unbounded joints get +-pi."""
+        out = {}
+        for name in self._names:
+            lim = self._urdf.joint_map[name].limit
+            lo = getattr(lim, "lower", None)
+            hi = getattr(lim, "upper", None)
+            vel = getattr(lim, "velocity", None) or 1.0
+            out[name] = (-3.1416 if lo is None else lo, 3.1416 if hi is None else hi, vel)
+        return out
+
     def pose(self, joints: dict[str, float]) -> None:
         """Move the robot; an unchanged pose costs nothing to send."""
         for i, name in enumerate(self._names):

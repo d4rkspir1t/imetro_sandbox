@@ -1,13 +1,9 @@
-"""Operator actions: the extension point for control buttons.
+"""Runs operator actions off the GUI and render threads and tracks their status.
 
-Read-only for now: nothing is registered, so the panel shows no controls. To add one later,
-register an ``Action`` (e.g. a MoveIt goal or a controller switch) against the ``Cell``'s node:
-
-    actions.register(Action("home", "Go home", run=lambda: send_named_pose("home"),
-                            enabled=lambda snap: snap.joint_age_s is not None))
-
-Contract the panel relies on: ``run`` is called on a worker thread, never the render thread,
-so it may block on ROS futures; exceptions are caught and surfaced as the action's status.
+Click handlers must return quickly, and a ROS call can block for seconds, so every action goes
+through ``Actions.submit``: it runs the callable on a worker thread, refuses a second copy of
+the same key while one is running, and records the outcome (an exception becomes a message the
+operator sees rather than a dead button). The commands themselves live in ``commands.py``.
 """
 
 from __future__ import annotations
@@ -15,45 +11,40 @@ from __future__ import annotations
 import logging
 import threading
 from collections.abc import Callable
-from dataclasses import dataclass
-
-from imetro_dashboard.cell import Cell, Snapshot
 
 LOGGER = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
-class Action:
-    key: str
-    label: str
-    run: Callable[[], str | None]  # returns an optional status message
-    enabled: Callable[[Snapshot], bool] = lambda _snap: True
-    group: str = "Controls"
-
-
 class Actions:
-    """Registry plus a worker that runs actions off the GUI/render threads."""
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._running: set[str] = set()
+        self._status: dict[str, str] = {}
 
-    def __init__(self, cell: Cell, read_only: bool = True) -> None:
-        self.cell = cell
-        self.read_only = read_only
-        self._actions: dict[str, Action] = {}
-        self.status: dict[str, str] = {}
+    def submit(self, key: str, fn: Callable[[], str | None]) -> bool:
+        """Run ``fn`` on a worker. Returns False if ``key`` is already running."""
+        with self._lock:
+            if key in self._running:
+                return False
+            self._running.add(key)
+            self._status[key] = "running…"
+        threading.Thread(target=self._run, args=(key, fn), name=f"action-{key}", daemon=True).start()
+        return True
 
-    def register(self, action: Action) -> None:
-        self._actions[action.key] = action
-
-    def all(self) -> list[Action]:
-        return [] if self.read_only else list(self._actions.values())
-
-    def trigger(self, key: str) -> None:
-        action = self._actions[key]
-        threading.Thread(target=self._run, args=(action,), name=f"action-{key}", daemon=True).start()
-
-    def _run(self, action: Action) -> None:
-        self.status[action.key] = "running"
+    def _run(self, key: str, fn: Callable[[], str | None]) -> None:
         try:
-            self.status[action.key] = action.run() or "done"
+            outcome = fn() or "done"
         except Exception as exc:  # noqa: BLE001 - surfaced to the operator, not swallowed
-            LOGGER.exception("action %s failed", action.key)
-            self.status[action.key] = f"failed: {exc}"
+            LOGGER.exception("action %s failed", key)
+            outcome = f"failed: {exc}"
+        with self._lock:
+            self._running.discard(key)
+            self._status[key] = outcome
+
+    def status(self) -> dict[str, str]:
+        with self._lock:
+            return dict(self._status)
+
+    def busy(self, key: str) -> bool:
+        with self._lock:
+            return key in self._running

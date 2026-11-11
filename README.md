@@ -44,10 +44,21 @@ Kinematic-only simulation: `./scripts/run_sim.sh kinematic`.
 ./scripts/run_dashboard.sh    # terminal 2: dashboard, then open http://localhost:8080
 ```
 
-Read-only for now: the robot, lift, rail and mockups posed from `/joint_states`, plus status
-(description, joint-state rate, sim time, real-time factor). The code is in `dashboard/` and is
-bind-mounted into the container, so edits need only a restart of `run_dashboard.sh`.
-Control buttons plug in through `Actions.register()` in `dashboard/imetro_dashboard/actions.py`.
+The robot, lift, rail and mockups are posed live from `/joint_states`, with status (description,
+joint-state rate, sim time, real-time factor). The code is in `dashboard/` and is bind-mounted into
+the container, so edits only need a restart of `run_dashboard.sh`.
+
+Controls (side panel):
+- **Robot control**: sliders and a Move button each for the arm, rail and lift (limits from the
+  URDF, speed slider, Stop). These send `FollowJointTrajectory` goals to the active controllers.
+- **Environment**: pick a door, handle, latch or drawer and set its angle or travel inside MuJoCo,
+  e.g. open a cabinet before the robot reaches for it. This uses MuJoCo's `reset_world` service,
+  so the sim must run with mockup state interfaces (`run_sim.sh` does this). Blocked while the
+  robot moves. "Reset environment" returns doors and objects to their initial state; the robot
+  keeps its last commanded pose.
+
+New commands go in `commands.py` (ROS calls) and `controls.py` (widgets); `actions.py` runs them on
+worker threads so the GUI never blocks.
 `./scripts/run_sim.sh mujoco-gui` gives the MuJoCo window; MoveIt's RViz is off unless
 `RVIZ=true ./scripts/run_moveit.sh`. Use a GPU-accelerated browser: the scene is ~365k triangles.
 

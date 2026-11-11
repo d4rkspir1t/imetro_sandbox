@@ -10,6 +10,8 @@ import viser
 
 from imetro_dashboard.actions import Actions
 from imetro_dashboard.cell import Cell
+from imetro_dashboard.commands import Commands
+from imetro_dashboard.controls import Controls
 from imetro_dashboard.panel import Panel
 from imetro_dashboard.scene import RobotScene
 
@@ -30,7 +32,9 @@ def main(argv: list[str] | None = None) -> None:
     server = viser.ViserServer(host=args.host, port=args.port)
     server.scene.set_up_direction("+z")
     server.scene.add_grid("/grid", width=6.0, height=6.0, plane="xy")
-    panel = Panel(server, Actions(cell, read_only=True))
+    panel = Panel(server)
+    actions = Actions()
+    controls: Controls | None = None
 
     scene: RobotScene | None = None
     next_panel = 0.0
@@ -42,6 +46,7 @@ def main(argv: list[str] | None = None) -> None:
                 try:
                     scene = RobotScene(server, snap.description)
                     LOGGER.info("robot loaded: %d actuated joints", len(scene.joint_names))
+                    controls = Controls(server, cell, Commands(cell, scene.limits), actions, scene.limits, scene.joint_names)
                 except Exception:
                     LOGGER.exception("could not load the robot description")
                     time.sleep(2.0)
@@ -50,6 +55,8 @@ def main(argv: list[str] | None = None) -> None:
             now = time.monotonic()
             if now >= next_panel:
                 panel.update(snap, scene is not None)
+                if controls is not None:
+                    controls.update(snap)
                 next_panel = now + 1.0 / PANEL_HZ
             time.sleep(1.0 / SCENE_HZ)
     except KeyboardInterrupt:

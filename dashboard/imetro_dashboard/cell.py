@@ -90,7 +90,8 @@ class Cell:
                 if self._rtf_mark is None:
                     self._rtf_mark = (now, self._sim_time)
                 elif now - self._rtf_mark[0] >= 1.0:
-                    self._rtf = (self._sim_time - self._rtf_mark[1]) / (now - self._rtf_mark[0])
+                    rtf = (self._sim_time - self._rtf_mark[1]) / (now - self._rtf_mark[0])
+                    self._rtf = rtf if rtf >= 0 else None  # a world reset can step the clock back
                     self._rtf_mark = (now, self._sim_time)
             age = None if self._last_joint_wall is None else now - self._last_joint_wall
             return Snapshot(

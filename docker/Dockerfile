@@ -123,6 +123,8 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
         xvfb x11vnc novnc websockify openbox \
     && rm -rf /var/lib/apt/lists/*
+# Web dashboard dependency (kept in this late stage so the workspace layers stay cached).
+RUN PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install yourdfpy
 COPY docker/entrypoint-vnc.sh /entrypoint-vnc.sh
 RUN chmod +x /entrypoint-vnc.sh
 USER ${USERNAME}

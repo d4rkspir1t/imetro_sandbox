@@ -27,6 +27,7 @@ docker compose build                            # first build is slow (MoveIt, M
 | Need | Flag |
 |---|---|
 | Host display (X11 / XWayland) | `--display x11` (default) |
+| Browser dashboard (viser 3D view + status, MuJoCo headless) | `--display web` then open http://localhost:8080 |
 | Browser display, no host X needed (software rendering) | `--display novnc` then open http://localhost:6080/vnc.html |
 | NVIDIA GPU (needs NVIDIA Container Toolkit) | `--gpu nvidia` |
 | Intel / AMD GPU | `--gpu dri` |
@@ -34,6 +35,21 @@ docker compose build                            # first build is slow (MoveIt, M
 
 Re-run `setup.sh` with different flags any time, then `docker compose up -d --build`.
 Kinematic-only simulation: `./scripts/run_sim.sh kinematic`.
+
+## Web dashboard
+
+```bash
+./scripts/setup.sh --display web && docker compose up -d --build
+./scripts/run_sim.sh          # terminal 1: MuJoCo, headless
+./scripts/run_dashboard.sh    # terminal 2: dashboard, then open http://localhost:8080
+```
+
+Read-only for now: the robot, lift, rail and mockups posed from `/joint_states`, plus status
+(description, joint-state rate, sim time, real-time factor). The code is in `dashboard/` and is
+bind-mounted into the container, so edits need only a restart of `run_dashboard.sh`.
+Control buttons plug in through `Actions.register()` in `dashboard/imetro_dashboard/actions.py`.
+`./scripts/run_sim.sh mujoco-gui` gives the MuJoCo window; MoveIt's RViz is off unless
+`RVIZ=true ./scripts/run_moveit.sh`. Use a GPU-accelerated browser: the scene is ~365k triangles.
 
 ## Reproducibility and offline use
 

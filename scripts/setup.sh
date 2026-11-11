@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-time setup: submodules, git-lfs, .env.
-# Usage: scripts/setup.sh [--display x11|novnc] [--gpu none|nvidia|dri] [--dev]
+# Usage: scripts/setup.sh [--display x11|novnc|web] [--gpu none|nvidia|dri] [--dev]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -41,7 +41,8 @@ files="compose.yaml"
 case "$DISPLAY_MODE" in
   x11)   files+=":compose.x11.yaml";;
   novnc) files+=":compose.novnc.yaml";;
-  *) echo "--display must be x11 or novnc"; exit 1;;
+  web)   files+=":compose.web.yaml";;
+  *) echo "--display must be x11, novnc or web"; exit 1;;
 esac
 case "$GPU" in
   none)   ;;

@@ -1,0 +1,17 @@
+# Browser dashboard (viser): open http://localhost:8080 after ./scripts/run_dashboard.sh
+# Uses the `vnc` image target only for its virtual X server, which MuJoCo's camera rendering
+# needs even when headless. Nothing VNC is published; add compose.novnc.yaml to also get
+# http://localhost:6080/vnc.html for debugging.
+services:
+  sim:
+    build:
+      target: vnc
+    image: imetro-sandbox:${IMETRO_TAG:-latest}-vnc
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      DISPLAY: ":99"
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      PYTHONPATH: /home/imetro/dashboard
+    volumes:
+      - ./dashboard:/home/imetro/dashboard:ro
